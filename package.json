@@ -1,5 +1,5 @@
 {
-  "name": "workpath-client",
+  "name": "@workpathco/client",
   "version": "1.0.0",
   "description": "OAuth client library for Workpath",
   "main": "build/main/index.js",
@@ -50,11 +50,15 @@
   "engines": {
     "node": ">=8.9"
   },
-  "dependencies": {},
+  "dependencies": {
+    "axios": "^0.19.2",
+    "js-cookie": "^2.2.1"
+  },
   "devDependencies": {
     "@bitjson/npm-scripts-info": "^1.0.0",
     "@bitjson/typedoc": "^0.15.0-0",
     "@istanbuljs/nyc-config-typescript": "^0.1.3",
+    "@types/node": "^13.9.8",
     "ava": "2.2.0",
     "codecov": "^3.5.0",
     "cz-conventional-changelog": "^2.1.0",
@@ -64,11 +68,15 @@
     "open-cli": "^5.0.0",
     "prettier": "^1.18.2",
     "standard-version": "^6.0.1",
+    "text-encoding": "^0.7.0",
     "trash-cli": "^3.0.0",
     "tslint": "^5.18.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-immutable": "^6.0.1",
-    "typescript": "^3.5.3"
+    "typedarray": "^0.0.6",
+    "typescript": "^3.5.3",
+    "url-search-params-polyfill": "^8.0.0",
+    "webcrypto-shim": "^0.1.5"
   },
   "ava": {
     "failFast": true,
