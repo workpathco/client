@@ -18,6 +18,10 @@ export type AuthenticationOptions = {
   client_id: string;
   scope?: string;
 };
+export type ConsumePayload = {
+  state: string;
+  code: string;
+};
 export type Events = {
   onSuccess?: () => void;
   onError?: () => void;
@@ -30,6 +34,7 @@ class Authenticate {
   };
 
   public token: T;
+  private _iframe: Iframe;
 
   constructor(options: AuthenticationOptions) {
     this._options = { ...this._options, ...options };
@@ -37,6 +42,7 @@ class Authenticate {
       this._options.scope = 'offline_access';
     }
     this.token = new T();
+    this._iframe = new Iframe(this._options);
   }
 
   async url(payload: UrlPayload = {}): Promise<AuthorizationUrl | void> {
@@ -77,7 +83,7 @@ class Authenticate {
 
     const logoutUrl = new URL(`${process.env.AUTH_URL}/logout`);
     const params = new URLSearchParams({
-      redirect_to: this._options.redirect_uri,
+      redirect_uri: this._options.redirect_uri,
       client_id: this._options.client_id
     });
     logoutUrl.search = params.toString();
@@ -99,23 +105,24 @@ class Authenticate {
       response_mode: 'web_message'
     });
     if (authUrl) {
-      const token = await Iframe.run(authUrl);
-      this.token.setToken(token);
-      return token;
+      const { code, state } = await this._iframe.run(authUrl);
+      await this.consume({ code, state });
+      return this.token.getToken();
     }
     return null;
   }
-
-  async consume(): Promise<void> {
+  async consume(
+    { state: _state, code }: ConsumePayload = { state: null, code: null }
+  ): Promise<void> {
     const params = new URLSearchParams(window.location.search);
-    const state = params.get('state');
+    const state = _state || params.get('state');
     const code_verifier = this.getState(state);
     if (!code_verifier) {
       throw new CodeVerifierError();
     }
     const requestParams = new URLSearchParams({
       code_verifier,
-      code: params.get('code'),
+      code: code || params.get('code'),
       code_method_challenge: 'S256',
       grant_type: 'authorization_code',
       scope: this._options.scope,
