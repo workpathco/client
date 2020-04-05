@@ -1,14 +1,20 @@
-import Cookies from 'js-cookie';
-import { STATE_PREFIX } from './shared';
+import Lock from 'browser-tabs-lock';
+import * as storage from './storage';
 import Crypto from './crypto';
-import { CodeVerifierError, DataError } from './error';
+import Transactioner from './transactioner';
+import { AuthenticationError, CodeVerifierError, DataError } from './error';
 import Iframe from './iframe';
 import request from './request';
 import T, { Token } from './token';
 
 export const LOGGED_IN_KEY = '_wp_logged';
+const lock = new Lock();
+const RENEW_LOCK_KEY = '_wp_lock_renew';
 
-export type AuthorizationUrl = string;
+export type AuthorizationUrl = {
+  url: string;
+  state: string;
+};
 export type UrlPayload = {
   prompt?: string;
   response_mode?: string;
@@ -21,6 +27,8 @@ export type AuthenticationOptions = {
 export type ConsumePayload = {
   state: string;
   code: string;
+  error: string;
+  error_description: string;
 };
 export type Events = {
   onSuccess?: () => void;
@@ -35,6 +43,7 @@ class Authenticate {
 
   public token: T;
   private _iframe: Iframe;
+  private _transactioner: Transactioner;
 
   constructor(options: AuthenticationOptions) {
     this._options = { ...this._options, ...options };
@@ -42,7 +51,8 @@ class Authenticate {
       this._options.scope = 'offline_access';
     }
     this.token = new T();
-    this._iframe = new Iframe(this._options);
+    this._iframe = new Iframe();
+    this._transactioner = new Transactioner();
   }
 
   async url(payload: UrlPayload = {}): Promise<AuthorizationUrl | void> {
@@ -50,7 +60,6 @@ class Authenticate {
       const state = Crypto.randomString(32);
       const codeVerifier = Crypto.randomString(32);
       const code_challenge = await Crypto.sha256(codeVerifier);
-      this.setState(state, codeVerifier);
 
       const authorizationEndpointUrl = new URL(
         `${process.env.AUTH_URL || 'https://auth.workpath.co'}/oauth/authorize`
@@ -68,8 +77,14 @@ class Authenticate {
         ...payload
       });
 
+      this._transactioner.create(state, {
+        code_verifier: codeVerifier,
+        scope: this._options.scope,
+        redirect_uri: this._options.redirect_uri
+      });
+
       authorizationEndpointUrl.search = searchParams.toString();
-      return authorizationEndpointUrl.toString();
+      return { url: authorizationEndpointUrl.toString(), state };
     } catch (err) {
       throw new Error(
         `Error creating authorization url. Reason: ${err.message}`
@@ -95,33 +110,73 @@ class Authenticate {
     const authUrl = await this.url();
     if (authUrl) {
       document.location.href = '';
-      document.location.assign(authUrl);
+      document.location.assign(authUrl.url);
     }
   }
 
   async renew(): Promise<Token | null> {
+    // If we already have a token, just return it
+    const token = this.token.getToken();
+    if (this.isLoggedIn() && token) {
+      return token;
+    }
     const authUrl = await this.url({
       prompt: 'none',
       response_mode: 'web_message'
     });
     if (authUrl) {
-      const { code, state } = await this._iframe.run(authUrl);
-      await this.consume({ code, state });
-      return this.token.getToken();
+      try {
+        await lock.acquireLock(RENEW_LOCK_KEY, 5000);
+        const response = await this._iframe.run(authUrl.url);
+        await this.consume(response);
+        return this.token.getToken();
+      } catch (err) {
+        throw err;
+      } finally {
+        await lock.releaseLock(RENEW_LOCK_KEY);
+      }
     }
     return null;
   }
   async consume(
-    { state: _state, code }: ConsumePayload = { state: null, code: null }
+    {
+      state: _state,
+      code,
+      error: _error,
+      error_description: _error_description
+    }: ConsumePayload = {
+      state: null,
+      code: null,
+      error: null,
+      error_description: null
+    }
   ): Promise<void> {
     const params = new URLSearchParams(window.location.search);
+    if (
+      !_state &&
+      !_error &&
+      !Array.from((params as unknown) as Iterable<URLSearchParams>).length
+    ) {
+      throw new Error('There are no query params available for parsing.');
+    }
+
     const state = _state || params.get('state');
-    const code_verifier = this.getState(state);
-    if (!code_verifier) {
+    const error = _error || params.get('error');
+    const error_description =
+      _error_description || params.get('error_description');
+    const transaction = this._transactioner.get(state);
+    if (!transaction) {
       throw new CodeVerifierError();
     }
+
+    this._transactioner.remove(state);
+
+    if (error) {
+      throw new AuthenticationError(error, error_description, state);
+    }
+
     const requestParams = new URLSearchParams({
-      code_verifier,
+      code_verifier: transaction.code_verifier,
       code: code || params.get('code'),
       code_method_challenge: 'S256',
       grant_type: 'authorization_code',
@@ -140,33 +195,19 @@ class Authenticate {
       }
     );
     if (!response || !response.data) {
-      this.removeState(state);
       throw new DataError();
     }
     this.token.setToken(response.data);
     this.setIsLoggedIn();
-    this.removeState(state);
   }
   setIsLoggedIn() {
-    Cookies.set(LOGGED_IN_KEY, '1');
+    storage.save(LOGGED_IN_KEY, '1');
   }
   removeIsLoggedIn() {
-    Cookies.remove(LOGGED_IN_KEY);
+    storage.remove(LOGGED_IN_KEY);
   }
   isLoggedIn(): boolean {
-    return !!Cookies.get(LOGGED_IN_KEY);
-  }
-
-  getState(state: string) {
-    return sessionStorage.getItem(`${STATE_PREFIX}${state}`);
-  }
-
-  setState(state: string, codeVerifier: string) {
-    sessionStorage.setItem(`${STATE_PREFIX}${state}`, codeVerifier);
-  }
-
-  removeState(state: string) {
-    sessionStorage.removeItem(`${STATE_PREFIX}${state}`);
+    return !!storage.get(LOGGED_IN_KEY);
   }
 }
 export { Authenticate };
