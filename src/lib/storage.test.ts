@@ -61,18 +61,3 @@ describe('remove', () => {
     expect(testValue).toEqual(undefined);
   });
 });
-
-// export const save = (
-//   key: string,
-//   value: any,
-//   options: ClientStorageOptions = {
-//     daysUntilExpire: 1
-//   }
-// ) => {
-//   Cookies.set(key, JSON.stringify(value), {
-//     expires: options.daysUntilExpire
-//   });
-// };
-// export const remove = (key: string) => {
-//   Cookies.remove(key);
-// };
