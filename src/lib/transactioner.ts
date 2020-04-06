@@ -1,6 +1,6 @@
 import * as storage from './storage';
-const COOKIE_KEY = '_wp_txs_';
-const getTransactionKey = (state: string) => `${COOKIE_KEY}${state}`;
+export const COOKIE_KEY = '_wp_txs_';
+export const getTransactionKey = (state: string) => `${COOKIE_KEY}${state}`;
 type Transaction = {
   scope: string;
   code_verifier: string;
