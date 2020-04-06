@@ -5,16 +5,31 @@ import Transactioner from './transactioner';
 import { AuthenticationError, CodeVerifierError, DataError } from './error';
 import Iframe from './iframe';
 import request from './request';
-import T, { Token } from './token';
+import Memory, { Token } from './memory';
 
+/**
+ * @ignore
+ */
 export const LOGGED_IN_KEY = '_wp_logged';
+/**
+ * @ignore
+ */
 const lock = new Lock();
+/**
+ * @ignore
+ */
 const RENEW_LOCK_KEY = '_wp_lock_renew';
 
+/**
+ * @ignore
+ */
 export type AuthorizationUrl = {
   url: string;
   state: string;
 };
+/**
+ * @ignore
+ */
 export type UrlPayload = {
   prompt?: string;
   response_mode?: string;
@@ -24,15 +39,14 @@ export type AuthenticationOptions = {
   client_id: string;
   scope?: string;
 };
+/**
+ * @ignore
+ */
 export type ConsumePayload = {
   state: string;
   code: string;
   error: string;
   error_description: string;
-};
-export type Events = {
-  onSuccess?: () => void;
-  onError?: () => void;
 };
 class Authenticate {
   private _options: AuthenticationOptions = {
@@ -41,7 +55,7 @@ class Authenticate {
     scope: null
   };
 
-  public token: T;
+  public memory: Memory;
   private _iframe: Iframe;
   private _transactioner: Transactioner;
 
@@ -50,12 +64,14 @@ class Authenticate {
     if (!this._options.scope) {
       this._options.scope = 'offline_access';
     }
-    this.token = new T();
+    this.memory = new Memory();
     this._iframe = new Iframe();
     this._transactioner = new Transactioner();
   }
 
-  async url(payload: UrlPayload = {}): Promise<AuthorizationUrl | void> {
+  private async url(
+    payload: UrlPayload = {}
+  ): Promise<AuthorizationUrl | void> {
     try {
       const state = Crypto.randomString(32);
       const codeVerifier = Crypto.randomString(32);
@@ -94,7 +110,7 @@ class Authenticate {
 
   async logout() {
     this.removeIsLoggedIn();
-    this.token.removeToken();
+    this.memory.removeToken();
 
     const logoutUrl = new URL(`${process.env.AUTH_URL}/logout`);
     const params = new URLSearchParams({
@@ -116,7 +132,7 @@ class Authenticate {
 
   async renew(): Promise<Token | null> {
     // If we already have a token, just return it
-    const token = this.token.getToken();
+    const token = this.memory.getToken();
     if (this.isLoggedIn() && token) {
       return token;
     }
@@ -129,7 +145,7 @@ class Authenticate {
         await lock.acquireLock(RENEW_LOCK_KEY, 5000);
         const response = await this._iframe.run(authUrl.url);
         await this.consume(response);
-        return this.token.getToken();
+        return this.memory.getToken();
       } catch (err) {
         throw err;
       } finally {
@@ -197,13 +213,13 @@ class Authenticate {
     if (!response || !response.data) {
       throw new DataError();
     }
-    this.token.setToken(response.data);
+    this.memory.setToken(response.data);
     this.setIsLoggedIn();
   }
-  setIsLoggedIn() {
+  private setIsLoggedIn() {
     storage.save(LOGGED_IN_KEY, '1');
   }
-  removeIsLoggedIn() {
+  private removeIsLoggedIn() {
     storage.remove(LOGGED_IN_KEY);
   }
   isLoggedIn(): boolean {

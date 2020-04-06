@@ -1,9 +1,4 @@
 import { ConsumePayload } from './authentication';
-import { Token } from './token';
-export type IframeEvents = {
-  onSuccess: (token: Token) => void;
-  onError: (error: Error) => void;
-};
 
 const TIMEOUT_ERROR = { error: 'timeout', error_description: 'Timeout' };
 const DEFAULT_AUTHORIZE_TIMEOUT_IN_SECONDS = 60;
