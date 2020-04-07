@@ -22,8 +22,16 @@ class Crypto {
   }
 
   static async sha256(message: string) {
-    let encoder = new TextEncoder();
-    let data = encoder.encode(message);
+    let data: Uint8Array;
+    if (window.TextEncoder) {
+      data = new TextEncoder().encode(message);
+    } else {
+      const utf8 = unescape(encodeURIComponent(message));
+      data = new Uint8Array(utf8.length);
+      for (var i = 0; i < utf8.length; i++) {
+        data[i] = utf8.charCodeAt(i);
+      }
+    }
     if (!window.crypto || !window.crypto.subtle) {
       throw new Error('SubtleCrypto functionality not supported');
     }

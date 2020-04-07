@@ -1,7 +1,6 @@
 import TA from 'typedarray';
 window.Uint8Array = window.Uint8Array ? window.Uint8Array : TA.Uint8Array;
 import 'webcrypto-shim';
-import 'text-encoding';
 import 'url-search-params-polyfill';
 
 (function() {
