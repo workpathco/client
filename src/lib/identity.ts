@@ -22,7 +22,7 @@ class Identity {
   }
   async getUser(): Promise<GetUserReturn> {
     if (
-      !this._authentication.token.getToken() &&
+      !this._authentication.memory.getToken() &&
       !this._authentication.isLoggedIn()
     ) {
       return Promise.resolve(null);
