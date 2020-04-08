@@ -4,8 +4,9 @@ import Crypto from './crypto';
 import Transactioner from './transactioner';
 import { AuthenticationError, CodeVerifierError, DataError } from './error';
 import Iframe from './iframe';
-import request from './request';
+import initializeClientRequest from './request';
 import Memory, { Token } from './memory';
+import { AxiosInstance } from 'axios';
 
 /**
  * @ignore
@@ -38,6 +39,8 @@ export type AuthenticationOptions = {
   redirect_uri: string;
   client_id: string;
   scope?: string;
+  auth_domain?: string;
+  id_domain?: string;
 };
 /**
  * @ignore
@@ -48,16 +51,21 @@ export type ConsumePayload = {
   error: string;
   error_description: string;
 };
+const DEFAULT_AUTH_DOMAIN = 'https://api-prod.workpath.co';
+const DEFAULT_ID_DOMAIN = 'https://id.workpath.co';
 class Authenticate {
   private _options: AuthenticationOptions = {
     redirect_uri: null,
     client_id: null,
-    scope: null
+    scope: null,
+    auth_domain: DEFAULT_AUTH_DOMAIN,
+    id_domain: DEFAULT_ID_DOMAIN
   };
 
   public memory: Memory;
   private _iframe: Iframe;
   private _transactioner: Transactioner;
+  private _request: AxiosInstance;
 
   constructor(options: AuthenticationOptions) {
     this._options = { ...this._options, ...options };
@@ -67,6 +75,7 @@ class Authenticate {
     this.memory = new Memory();
     this._iframe = new Iframe();
     this._transactioner = new Transactioner();
+    this._request = initializeClientRequest(this._options.auth_domain);
   }
 
   private async url(
@@ -78,7 +87,7 @@ class Authenticate {
       const code_challenge = await Crypto.sha256(codeVerifier);
 
       const authorizationEndpointUrl = new URL(
-        `${process.env.AUTH_URL || 'https://auth.workpath.co'}/oauth/authorize`
+        `${this._options.auth_domain}/oauth/authorize`
       );
 
       // here we encode the authorization request
@@ -112,7 +121,7 @@ class Authenticate {
     this.removeIsLoggedIn();
     this.memory.removeToken();
 
-    const logoutUrl = new URL(`${process.env.AUTH_URL}/logout`);
+    const logoutUrl = new URL(`${this._options.id_domain}/logout`);
     const params = new URLSearchParams({
       redirect_uri: this._options.redirect_uri,
       client_id: this._options.client_id
@@ -125,8 +134,8 @@ class Authenticate {
   async login() {
     const authUrl = await this.url();
     if (authUrl) {
-      document.location.href = '';
-      document.location.assign(authUrl.url);
+      window.location.href = '';
+      window.location.assign(authUrl.url);
     }
   }
 
@@ -143,7 +152,10 @@ class Authenticate {
     if (authUrl) {
       try {
         await lock.acquireLock(RENEW_LOCK_KEY, 5000);
-        const response = await this._iframe.run(authUrl.url);
+        const response = await this._iframe.run(
+          authUrl.url,
+          this._options.auth_domain
+        );
         await this.consume(response);
         return this.memory.getToken();
       } catch (err) {
@@ -201,7 +213,7 @@ class Authenticate {
       redirect_uri: this._options.redirect_uri
     });
 
-    const response = await request.post(
+    const response = await this._request.post(
       '/oauth/token',
       requestParams.toString(),
       {
@@ -224,6 +236,18 @@ class Authenticate {
   }
   isLoggedIn(): boolean {
     return !!storage.get(LOGGED_IN_KEY);
+  }
+  public get scope() {
+    return this._options.scope;
+  }
+  public get redirect_uri() {
+    return this._options.redirect_uri;
+  }
+  public get client_id() {
+    return this._options.client_id;
+  }
+  public get request() {
+    return this._request;
   }
 }
 export { Authenticate };

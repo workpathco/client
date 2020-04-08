@@ -3,9 +3,8 @@ import { ConsumePayload } from './authentication';
 const TIMEOUT_ERROR = { error: 'timeout', error_description: 'Timeout' };
 const DEFAULT_AUTHORIZE_TIMEOUT_IN_SECONDS = 60;
 const CLEANUP_IFRAME_TIMEOUT_IN_SECONDS = 2;
-const eventOrigin = getEventOrigin(process.env.AUTH_URL);
 class Iframe {
-  async run(url: string): Promise<ConsumePayload | null> {
+  async run(url: string, origin: string): Promise<ConsumePayload | null> {
     return new Promise((res, rej) => {
       const iframe = document.createElement('iframe');
       iframe.setAttribute('width', '0');
@@ -18,7 +17,7 @@ class Iframe {
       }, DEFAULT_AUTHORIZE_TIMEOUT_IN_SECONDS * 1000);
 
       const iframeEventHandler = function(e: MessageEvent) {
-        if (e.origin != eventOrigin) return;
+        if (e.origin != origin) return;
         if (!e.data || e.data.type !== 'authorization_response') return;
 
         (<any>e.source).close();
@@ -41,9 +40,3 @@ class Iframe {
   }
 }
 export default Iframe;
-
-function getEventOrigin(url: string) {
-  let parser = document.createElement('a');
-  parser.href = url;
-  return `${parser.protocol}//${parser.host}`;
-}

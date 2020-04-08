@@ -1,4 +1,3 @@
-import request from './request';
 import { Authenticate } from './authentication';
 
 export type User = {
@@ -28,14 +27,14 @@ class Identity {
       return Promise.resolve(null);
     }
     try {
-      const userRes = await request.get<User>(`/auth/me`);
+      const userRes = await this._authentication.request.get<User>(`/auth/me`);
       let orgRes;
       if (
         userRes.data &&
         userRes.data.organizations &&
         userRes.data.organizations.length
       ) {
-        orgRes = await request.get<Organization>(
+        orgRes = await this._authentication.request.get<Organization>(
           `/organizations/${userRes.data.organizations[0].id}`
         );
       }
