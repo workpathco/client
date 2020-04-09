@@ -1,8 +1,8 @@
 import * as storage from './storage';
 export const COOKIE_KEY = '_wp_txs_';
 export const getTransactionKey = (state: string) => `${COOKIE_KEY}${state}`;
-type Transaction = {
-  scope: string;
+export type Transaction = {
+  scope?: string;
   code_verifier: string;
   redirect_uri: string;
 };

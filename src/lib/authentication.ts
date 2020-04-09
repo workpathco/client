@@ -1,7 +1,7 @@
 import Lock from 'browser-tabs-lock';
 import * as storage from './storage';
 import Crypto from './crypto';
-import Transactioner from './transactioner';
+import Transactioner, { Transaction } from './transactioner';
 import { AuthenticationError, CodeVerifierError, DataError } from './error';
 import Iframe from './iframe';
 import initializeClientRequest from './request';
@@ -24,10 +24,7 @@ const RENEW_LOCK_KEY = '_wp_lock_renew';
 /**
  * @ignore
  */
-export type AuthorizationUrl = {
-  url: string;
-  state: string;
-};
+export type AuthorizationUrl = string;
 /**
  * @ignore
  */
@@ -57,7 +54,6 @@ class Authenticate {
   private _options: AuthenticationOptions = {
     redirect_uri: null,
     client_id: null,
-    scope: null,
     auth_domain: DEFAULT_AUTH_DOMAIN,
     id_domain: DEFAULT_ID_DOMAIN
   };
@@ -69,9 +65,6 @@ class Authenticate {
 
   constructor(options: AuthenticationOptions) {
     this._options = { ...this._options, ...options };
-    if (!this._options.scope) {
-      this._options.scope = 'offline_access';
-    }
     this.memory = new Memory();
     this._iframe = new Iframe();
     this._transactioner = new Transactioner();
@@ -96,20 +89,24 @@ class Authenticate {
         code_challenge,
         response_type: 'code',
         code_challenge_method: 'S256',
-        scope: this._options.scope,
         client_id: this._options.client_id,
         redirect_uri: this._options.redirect_uri,
         ...payload
       });
-
-      this._transactioner.create(state, {
+      const transactionParams: Transaction = {
         code_verifier: codeVerifier,
-        scope: this._options.scope,
         redirect_uri: this._options.redirect_uri
-      });
+      };
+
+      if (this._options.scope) {
+        searchParams.set('scope', this._options.scope);
+        transactionParams.scope = this._options.scope;
+      }
+
+      this._transactioner.create(state, transactionParams);
 
       authorizationEndpointUrl.search = searchParams.toString();
-      return { url: authorizationEndpointUrl.toString(), state };
+      return authorizationEndpointUrl.toString();
     } catch (err) {
       throw new Error(
         `Error creating authorization url. Reason: ${err.message}`
@@ -135,7 +132,7 @@ class Authenticate {
     const authUrl = await this.url();
     if (authUrl) {
       window.location.href = '';
-      window.location.assign(authUrl.url);
+      window.location.assign(authUrl);
     }
   }
 
@@ -153,7 +150,7 @@ class Authenticate {
       try {
         await lock.acquireLock(RENEW_LOCK_KEY, 5000);
         const response = await this._iframe.run(
-          authUrl.url,
+          authUrl,
           this._options.auth_domain
         );
         await this.consume(response);
@@ -208,11 +205,13 @@ class Authenticate {
       code: code || params.get('code'),
       code_method_challenge: 'S256',
       grant_type: 'authorization_code',
-      scope: this._options.scope,
       client_id: this._options.client_id,
       redirect_uri: this._options.redirect_uri
     });
 
+    if (transaction.scope) {
+      requestParams.set('scope', transaction.scope);
+    }
     const response = await this._request.post(
       '/oauth/token',
       requestParams.toString(),
