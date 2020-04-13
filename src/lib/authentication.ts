@@ -2,7 +2,7 @@ import Lock from 'browser-tabs-lock';
 import * as storage from './storage';
 import Crypto from './crypto';
 import Transactioner, { Transaction } from './transactioner';
-import { AuthenticationError, CodeVerifierError, DataError } from './error';
+import { AuthenticationError, DataError } from './error';
 import Iframe from './iframe';
 import initializeClientRequest from './request';
 import Memory, { Token } from './memory';
@@ -147,6 +147,7 @@ class Authenticate {
       response_mode: 'web_message'
     });
     if (authUrl) {
+      const transactioner = this._transactioner;
       try {
         await lock.acquireLock(RENEW_LOCK_KEY, 5000);
         const response = await this._iframe.run(
@@ -156,6 +157,9 @@ class Authenticate {
         await this.consume(response);
         return this.memory.getToken();
       } catch (err) {
+        const _url = new URL(authUrl);
+        const params = new URLSearchParams(_url.search);
+        transactioner.remove(params.get('state'));
         throw err;
       } finally {
         await lock.releaseLock(RENEW_LOCK_KEY);
@@ -191,7 +195,7 @@ class Authenticate {
       _error_description || params.get('error_description');
     const transaction = this._transactioner.get(state);
     if (!transaction) {
-      throw new CodeVerifierError();
+      throw new AuthenticationError('StateError', 'State not found', state);
     }
 
     this._transactioner.remove(state);
@@ -228,7 +232,9 @@ class Authenticate {
     this.setIsLoggedIn();
   }
   private setIsLoggedIn() {
-    storage.save(LOGGED_IN_KEY, '1');
+    let twelveHoursFromNow = new Date();
+    twelveHoursFromNow.setHours(twelveHoursFromNow.getHours() + 12);
+    storage.save(LOGGED_IN_KEY, '1', { expires: twelveHoursFromNow });
   }
   private removeIsLoggedIn() {
     storage.remove(LOGGED_IN_KEY);

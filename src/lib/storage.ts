@@ -1,8 +1,6 @@
 import * as Cookies from 'es-cookie';
 
-interface ClientStorageOptions {
-  daysUntilExpire: number;
-}
+type ClientStorageOptions = Cookies.CookieAttributes;
 
 export const getAllKeys = () => Object.keys(Cookies.getAll() || {});
 
@@ -17,12 +15,10 @@ export const save = (
   key: string,
   value: any,
   options: ClientStorageOptions = {
-    daysUntilExpire: 1
+    expires: 1
   }
 ) => {
-  Cookies.set(key, JSON.stringify(value), {
-    expires: options.daysUntilExpire
-  });
+  Cookies.set(key, JSON.stringify(value), options);
 };
 export const remove = (key: string) => {
   Cookies.remove(key);

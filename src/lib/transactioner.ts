@@ -23,8 +23,11 @@ class Transactioner {
   }
   public create(state: string, transaction: Transaction) {
     this.transactions[state] = transaction;
+    let fifteenMinutesFromNow = new Date();
+
+    fifteenMinutesFromNow.setMinutes(fifteenMinutesFromNow.getMinutes() + 15);
     storage.save(getTransactionKey(state), transaction, {
-      daysUntilExpire: 1
+      expires: fifteenMinutesFromNow
     });
   }
   public get(state: string): Transaction {
