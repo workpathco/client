@@ -31,7 +31,7 @@ export type AuthorizationUrl = string;
 export type UrlPayload = {
   prompt?: string;
   response_mode?: string;
-};
+} & { [x: string]: string };
 export type AuthenticationOptions = {
   redirect_uri: string;
   client_id: string;
@@ -128,8 +128,8 @@ class Authenticate {
     window.location.assign(logoutUrl.toString());
   }
 
-  async login() {
-    const authUrl = await this.url();
+  async login(payload: UrlPayload = {}) {
+    const authUrl = await this.url(payload);
     if (authUrl) {
       window.location.href = '';
       window.location.assign(authUrl);
