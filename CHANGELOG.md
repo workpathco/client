@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.22](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.19...v1.0.22) (2020-04-21)
+
+
+### Bug Fixes
+
+* **iframe:** remove load listener ([7535730](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/commit/7535730))
+
+
+
 ### [1.0.20](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.19...v1.0.20) (2020-04-16)
 
 
