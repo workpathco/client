@@ -35,13 +35,6 @@ class Iframe {
       };
 
       window.addEventListener('message', iframeEventHandler, false);
-      iframe.addEventListener('load', function() {
-        try {
-          (this.contentWindow || this.contentDocument).location.href;
-        } catch (err) {
-          rej(new Error('Request made incorrectly'));
-        }
-      });
       window.document.body.appendChild(iframe);
       iframe.setAttribute('src', url);
     });
