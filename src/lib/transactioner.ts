@@ -1,4 +1,7 @@
 import * as storage from './storage';
+const EXPIRATION_MINUTES: number = +(
+  process.env.TRANSACTION_EXPIRATION_MINUTES || 1440
+); // defaults to 1 day
 export const COOKIE_KEY = '_wp_txs_';
 export const getTransactionKey = (state: string) => `${COOKIE_KEY}${state}`;
 export type Transaction = {
@@ -23,11 +26,11 @@ class Transactioner {
   }
   public create(state: string, transaction: Transaction) {
     this.transactions[state] = transaction;
-    let fifteenMinutesFromNow = new Date();
+    let minutesFromNow = new Date();
 
-    fifteenMinutesFromNow.setMinutes(fifteenMinutesFromNow.getMinutes() + 15);
+    minutesFromNow.setMinutes(minutesFromNow.getMinutes() + EXPIRATION_MINUTES);
     storage.save(getTransactionKey(state), transaction, {
-      expires: fifteenMinutesFromNow
+      expires: minutesFromNow
     });
   }
   public get(state: string): Transaction {
