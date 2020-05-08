@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.28](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.26...v1.0.28) (2020-05-08)
+
+
+### Bug Fixes
+
+* **module:build:** esnext -> es5, esnext -> commonjs ([6be6679](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/commit/6be6679))
+
+
+
 ### [1.0.26](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.24...v1.0.26) (2020-05-08)
 
 
