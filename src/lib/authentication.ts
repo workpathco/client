@@ -49,7 +49,7 @@ export type ConsumePayload = {
   error_description: string;
 };
 const DEFAULT_AUTH_DOMAIN = 'https://api-prod.workpath.co';
-const DEFAULT_ID_DOMAIN = 'https://id.workpath.co';
+const DEFAULT_ID_DOMAIN = 'https://api-prod.workpath.co';
 class Authenticate {
   private _options: AuthenticationOptions = {
     redirect_uri: null,
