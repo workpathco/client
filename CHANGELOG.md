@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.34](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.32...v1.0.34) (2020-07-27)
+
+
+### Bug Fixes
+
+* change default id url ([88006a4](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/commit/88006a43125dadafd7a1fda77aa2e81911d854e0))
+
 ### [1.0.32](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.30...v1.0.32) (2020-07-14)
 
 ### [1.0.30](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.28...v1.0.30) (2020-05-08)
