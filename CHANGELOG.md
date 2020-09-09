@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.38](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.36...v1.0.38) (2020-09-09)
+
+
+### Bug Fixes
+
+* **transactioner:** check for process and process.env ([97f5318](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/commit/97f5318217278eb8626d4fd63ac288df2cad8adc))
+
 ### [1.0.36](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.34...v1.0.36) (2020-07-28)
 
 
