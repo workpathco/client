@@ -1,8 +1,5 @@
 import * as storage from './storage';
-const EXPIRATION_MINUTES: number = +(
-  (process && process.env && process.env.TRANSACTION_EXPIRATION_MINUTES) ||
-  1440
-); // defaults to 1 day
+const EXPIRATION_MINUTES: number = 1440; // defaults to 1 day
 export const COOKIE_KEY = '_wp_txs_';
 export const getTransactionKey = (state: string) => `${COOKIE_KEY}${state}`;
 export type Transaction = {

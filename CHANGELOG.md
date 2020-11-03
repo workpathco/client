@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.40](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.38...v1.0.40) (2020-09-15)
+
+
+### Bug Fixes
+
+* remove configuration ([984c8d2](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/commit/984c8d25b3d70d8e80a1f7f43fe314bf1c931cf5))
+
 ### [1.0.38](https://github.com/YOUR_GITHUB_USER_NAME/workpath-client/compare/v1.0.36...v1.0.38) (2020-09-09)
 
 
