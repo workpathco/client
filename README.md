@@ -61,4 +61,4 @@ All subsequent authenticated requests can be made with the `access_token` added 
 Authorization: Bearer XXXX-XXXX-XXXX-XXXX
 ```
 
-An example react implementation can be found [here](https://github.com/workpathco/client/tree/master/example)
+An example react implementation can be found [here](https://github.com/workpathco/example-client)
